@@ -18,6 +18,10 @@ class ObjWriter(stream: OutputStream) extends Closeable {
   def writeNormal(vec: Vec3d) {
     out.println("vn " + vec.x + " " + vec.y + " " + vec.z)
   }
+  
+  def writeObject(name: String) {
+    out.println("o " + name)
+  }
 
   def writeFace(face: Face) {
     out.print("f")
@@ -33,6 +37,8 @@ class ObjWriter(stream: OutputStream) extends Closeable {
   }
 
   def writeMesh(mesh: Mesh) {
+    writeObject(mesh.getName)
+    
     for (vert <- mesh.getVertices) {
       writeVertex(vert)
     }

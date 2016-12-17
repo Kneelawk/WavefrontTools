@@ -2,7 +2,7 @@ package org.kneelawk.wavefronttools
 
 import scala.collection.mutable.ListBuffer
 
-class BasicMesh extends Mesh {
+class BasicMesh(val name: String) extends Mesh {
   val vertices = new ListBuffer[Vec3d]
   val textureCoords = new ListBuffer[Vec2d]
   val normals = new ListBuffer[Vec3d]
@@ -28,6 +28,7 @@ class BasicMesh extends Mesh {
     this
   }
 
+  def getName = name
   def getVertices = vertices
   def getTextureCoordinates = textureCoords
   def getVertexNormals = normals
