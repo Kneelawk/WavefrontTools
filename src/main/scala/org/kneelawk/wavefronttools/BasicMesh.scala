@@ -2,27 +2,33 @@ package org.kneelawk.wavefronttools
 
 import scala.collection.mutable.ListBuffer
 
-class BasicMesh(val name: String) extends Mesh {
-  val vertices = new ListBuffer[Vec3d]
-  val textureCoords = new ListBuffer[Vec2d]
-  val normals = new ListBuffer[Vec3d]
-  val faces = new ListBuffer[Face]
+class BasicMesh(val name: String,
+    val vertices: ListBuffer[Vec3d],
+    val textureCoords: ListBuffer[Vec2d],
+    val normals: ListBuffer[Vec3d],
+    val faces: ListBuffer[Face]) extends Mesh {
+
+  def this(name: String) = this(name,
+    new ListBuffer[Vec3d],
+    new ListBuffer[Vec2d],
+    new ListBuffer[Vec3d],
+    new ListBuffer[Face])
 
   def addVertex(vert: Vec3d): BasicMesh = {
     vertices += vert
     this
   }
-  
-  def addTextCoord(tex: Vec2d): BasicMesh = {
+
+  def addTexCoord(tex: Vec2d): BasicMesh = {
     textureCoords += tex
     this
   }
-  
+
   def addNormal(norm: Vec3d): BasicMesh = {
     normals += norm
     this
   }
-  
+
   def addFace(face: Face): BasicMesh = {
     faces += face
     this
@@ -33,6 +39,10 @@ class BasicMesh(val name: String) extends Mesh {
   def getTextureCoordinates = textureCoords
   def getVertexNormals = normals
   def getFaces = faces
+
+  def transform(m: Mat4d) = new BasicMesh(name,
+      vertices.map(x => (m * x.toVec4d(true)).toVec3d),
+      textureCoords.clone(), normals.clone(), faces.clone())
 }
 
 class BasicFace extends Face {
@@ -42,7 +52,7 @@ class BasicFace extends Face {
     vertices += vert
     this
   }
-  
+
   def add(pos: Int, tex: Int, norm: Int): BasicFace = {
     vertices += new BasicVertex(pos, tex, norm)
     this

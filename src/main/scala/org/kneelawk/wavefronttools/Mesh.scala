@@ -6,6 +6,7 @@ trait Mesh {
   def getTextureCoordinates: Seq[Vec2d]
   def getVertexNormals: Seq[Vec3d]
   def getFaces: Seq[Face]
+  def transform(m: Mat4d): Mesh
 }
 
 trait Face {
