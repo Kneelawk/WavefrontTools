@@ -13,4 +13,6 @@ case class Vec3d(x: Double, y: Double, z: Double) {
     if (r == 0) new Vec3d(0, 0, 0)
     else new Vec3d(x / r, y / r, z / r)
   }
+
+  def toVec4d(position: Boolean) = new Vec4d(x, y, z, if (position) 1 else 0)
 }
