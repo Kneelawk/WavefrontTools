@@ -1,12 +1,16 @@
 package org.kneelawk.wavefronttools
 
-trait Mesh {
-  def getName: String
+trait MeshContext {
   def getVertices: Seq[Vec3d]
   def getTextureCoordinates: Seq[Vec2d]
   def getVertexNormals: Seq[Vec3d]
+  def getMeshes: Seq[Mesh]
+  def transform(m: Mat4d): MeshContext
+}
+
+trait Mesh {
+  def getName: String
   def getFaces: Seq[Face]
-  def transform(m: Mat4d): Mesh
 }
 
 trait Face {

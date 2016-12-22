@@ -39,17 +39,23 @@ class ObjWriter(stream: OutputStream) extends Closeable {
   def writeMesh(mesh: Mesh) {
     writeObject(mesh.getName)
     
-    for (vert <- mesh.getVertices) {
-      writeVertex(vert)
-    }
-    for (tex <- mesh.getTextureCoordinates) {
-      writeTextureCoordinate(tex)
-    }
-    for (norm <- mesh.getVertexNormals) {
-      writeNormal(norm)
-    }
     for (face <- mesh.getFaces) {
       writeFace(face)
+    }
+  }
+  
+  def writeMeshes(ctx: MeshContext) {
+    for (vert <- ctx.getVertices) {
+      writeVertex(vert)
+    }
+    for (tex <- ctx.getTextureCoordinates) {
+      writeTextureCoordinate(tex)
+    }
+    for (norm <- ctx.getVertexNormals) {
+      writeNormal(norm)
+    }
+    for (mesh <- ctx.getMeshes) {
+      writeMesh(mesh)
     }
   }
 

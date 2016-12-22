@@ -58,7 +58,7 @@ case class Mat4d(data: Vector[Vector[Double]]) {
     i31 * v.x + i32 * v.y + i33 * v.z + i34 * v.w,
     i41 * v.x + i42 * v.y + i43 * v.z + i44 * v.w)
   
-  def *(m: Mesh) = m.transform(this)
+  def *(m: MeshContext) = m.transform(this)
 }
 
 object Mat4d {

@@ -2,32 +2,52 @@ package org.kneelawk.wavefronttools
 
 import scala.collection.mutable.ListBuffer
 
-class BasicMesh(val name: String,
+class BasicMeshContext(
     val vertices: ListBuffer[Vec3d],
     val textureCoords: ListBuffer[Vec2d],
     val normals: ListBuffer[Vec3d],
+    val meshes: ListBuffer[Mesh]) extends MeshContext {
+
+  def this() = this(new ListBuffer[Vec3d],
+    new ListBuffer[Vec2d],
+    new ListBuffer[Vec3d],
+    new ListBuffer[Mesh])
+
+  def addVertex(vert: Vec3d): PositionIndex = {
+    vertices += vert
+    new PositionIndex(vertices.length)
+  }
+
+  def addTexCoord(tex: Vec2d): TexCoordIndex = {
+    textureCoords += tex
+    new TexCoordIndex(textureCoords.length)
+  }
+
+  def addNormal(norm: Vec3d): VertNormIndex = {
+    normals += norm
+    new VertNormIndex(normals.length)
+  }
+
+  def addMesh(mesh: Mesh): BasicMeshContext = {
+    meshes += mesh
+    this
+  }
+
+  def getVertices = vertices
+  def getTextureCoordinates = textureCoords
+  def getVertexNormals = normals
+  def getMeshes = meshes
+
+  def transform(m: Mat4d) = new BasicMeshContext(
+    vertices.map(x => (m * x.toVec4d(true)).toVec3d),
+    textureCoords.clone(), normals.clone(), meshes.clone())
+}
+
+class BasicMesh(val name: String,
     val faces: ListBuffer[Face]) extends Mesh {
 
   def this(name: String) = this(name,
-    new ListBuffer[Vec3d],
-    new ListBuffer[Vec2d],
-    new ListBuffer[Vec3d],
     new ListBuffer[Face])
-
-  def addVertex(vert: Vec3d): BasicMesh = {
-    vertices += vert
-    this
-  }
-
-  def addTexCoord(tex: Vec2d): BasicMesh = {
-    textureCoords += tex
-    this
-  }
-
-  def addNormal(norm: Vec3d): BasicMesh = {
-    normals += norm
-    this
-  }
 
   def addFace(face: Face): BasicMesh = {
     faces += face
@@ -35,14 +55,7 @@ class BasicMesh(val name: String,
   }
 
   def getName = name
-  def getVertices = vertices
-  def getTextureCoordinates = textureCoords
-  def getVertexNormals = normals
   def getFaces = faces
-
-  def transform(m: Mat4d) = new BasicMesh(name,
-      vertices.map(x => (m * x.toVec4d(true)).toVec3d),
-      textureCoords.clone(), normals.clone(), faces.clone())
 }
 
 class BasicFace extends Face {
@@ -53,7 +66,7 @@ class BasicFace extends Face {
     this
   }
 
-  def add(pos: Int, tex: Int, norm: Int): BasicFace = {
+  def add(pos: PositionIndex, tex: TexCoordIndex, norm: VertNormIndex): BasicFace = {
     vertices += new BasicVertex(pos, tex, norm)
     this
   }
@@ -61,8 +74,12 @@ class BasicFace extends Face {
   def getVertices = vertices
 }
 
-case class BasicVertex(pos: Int, tex: Int, norm: Int) extends Vertex {
-  def getPositionIndex = pos
-  def getTextureCoordinateIndex = tex
-  def getVertexNormalIndex = norm
+case class BasicVertex(pos: PositionIndex, tex: TexCoordIndex, norm: VertNormIndex) extends Vertex {
+  def getPositionIndex = pos.index
+  def getTextureCoordinateIndex = tex.index
+  def getVertexNormalIndex = norm.index
 }
+
+case class PositionIndex(index: Int)
+case class TexCoordIndex(index: Int)
+case class VertNormIndex(index: Int)
