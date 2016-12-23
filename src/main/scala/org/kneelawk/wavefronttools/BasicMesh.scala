@@ -57,8 +57,9 @@ class BasicMeshContext(
     normals.clone(),
     meshes.map(_.clone))
 
-  def transform(m: Mat4d) {
+  def transform(m: Mat4d): BasicMeshContext = {
     vertices.transform(x => (m * x.toVec4d(true)).toVec3d)
+    this
   }
 
   def merge(mesh: BasicMeshContext) {

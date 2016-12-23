@@ -5,7 +5,7 @@ trait MeshContext {
   def getTextureCoordinates: Seq[Vec2d]
   def getVertexNormals: Seq[Vec3d]
   def getMeshes: Seq[Mesh]
-  def transform(m: Mat4d)
+  def transform(m: Mat4d): MeshContext
 }
 
 trait Mesh {
