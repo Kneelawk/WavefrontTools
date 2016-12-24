@@ -3,38 +3,31 @@ package org.kneelawk.wavefronttools
 import scala.collection.mutable.ListBuffer
 
 class BasicMeshContext(
-    val vertices: ListBuffer[Vec3d],
-    val textureCoords: ListBuffer[Vec2d],
-    val normals: ListBuffer[Vec3d],
+    val vertices: ListBuffer[(Vec3d, PositionIndex)],
+    val textureCoords: ListBuffer[(Vec2d, TexCoordIndex)],
+    val normals: ListBuffer[(Vec3d, VertNormIndex)],
     val meshes: ListBuffer[BasicMesh]) extends MeshContext {
 
-  val positionIndices = new ListBuffer[PositionIndex]
-  val texCoordIndices = new ListBuffer[TexCoordIndex]
-  val vertNormIndices = new ListBuffer[VertNormIndex]
-
-  def this() = this(new ListBuffer[Vec3d],
-    new ListBuffer[Vec2d],
-    new ListBuffer[Vec3d],
+  def this() = this(new ListBuffer[(Vec3d, PositionIndex)],
+    new ListBuffer[(Vec2d, TexCoordIndex)],
+    new ListBuffer[(Vec3d, VertNormIndex)],
     new ListBuffer[BasicMesh])
 
   def addVertex(vert: Vec3d): PositionIndex = {
-    vertices += vert
     val idx = new PositionIndex(vertices.length)
-    positionIndices += idx
+    vertices += ((vert, idx))
     idx
   }
 
   def addTexCoord(tex: Vec2d): TexCoordIndex = {
-    textureCoords += tex
     val idx = new TexCoordIndex(textureCoords.length)
-    texCoordIndices += idx
+    textureCoords += ((tex, idx))
     idx
   }
 
   def addNormal(norm: Vec3d): VertNormIndex = {
-    normals += norm
     val idx = new VertNormIndex(normals.length)
-    vertNormIndices += idx
+    normals += ((norm, idx))
     idx
   }
 
@@ -43,9 +36,9 @@ class BasicMeshContext(
     this
   }
 
-  def getVertices = vertices
-  def getTextureCoordinates = textureCoords
-  def getVertexNormals = normals
+  def getVertices = vertices.map(_._1)
+  def getTextureCoordinates = textureCoords.map(_._1)
+  def getVertexNormals = normals.map(_._1)
   def getMeshes = meshes
 
   /**
@@ -58,21 +51,27 @@ class BasicMeshContext(
     meshes.map(_.clone))
 
   def transform(m: Mat4d): BasicMeshContext = {
-    vertices.transform(x => (m * x.toVec4d(true)).toVec3d)
+    vertices.transform(x => ((m * x._1.toVec4d(true)).toVec3d, x._2))
     this
   }
 
+  private def merge[Data, Index <: MeshIndex](mine: ListBuffer[(Data, Index)], other: ListBuffer[(Data, Index)]) {
+    val len = mine.length
+    other.foreach(e => {
+      val i = mine.indexWhere(_._1 == e._1)
+      if (i >= 0) {
+        e._2.set(mine(i)._2.get)
+      } else {
+        e._2.offset(len)
+        mine += e
+      }
+    })
+  }
+
   def merge(mesh: BasicMeshContext) {
-    // TODO: squash duplicates
-    vertices ++= mesh.vertices
-    textureCoords ++= mesh.textureCoords
-    normals ++= mesh.normals
-    mesh.positionIndices.foreach { x => x.index += positionIndices.length }
-    mesh.texCoordIndices.foreach { x => x.index += texCoordIndices.length }
-    mesh.vertNormIndices.foreach { x => x.index += vertNormIndices.length }
-    positionIndices ++= mesh.positionIndices
-    texCoordIndices ++= mesh.texCoordIndices
-    vertNormIndices ++= mesh.vertNormIndices
+    merge(vertices, mesh.vertices)
+    merge(textureCoords, mesh.textureCoords)
+    merge(normals, mesh.normals)
   }
 }
 
@@ -120,12 +119,25 @@ case class BasicVertex(pos: PositionIndex, tex: TexCoordIndex, norm: VertNormInd
   override def clone = new BasicVertex(pos.clone, tex.clone, norm.clone)
 }
 
-case class PositionIndex(var index: Int) {
+trait MeshIndex {
+  def get: Int
+  def set(i: Int)
+  def offset(i: Int) {
+    set(get + i)
+  }
+}
+case class PositionIndex(var index: Int) extends MeshIndex {
   override def clone = new PositionIndex(index)
+  def get = index
+  def set(i: Int) = index = i
 }
-case class TexCoordIndex(var index: Int) {
+case class TexCoordIndex(var index: Int) extends MeshIndex {
   override def clone = new TexCoordIndex(index)
+  def get = index
+  def set(i: Int) = index = i
 }
-case class VertNormIndex(var index: Int) {
+case class VertNormIndex(var index: Int) extends MeshIndex {
   override def clone = new VertNormIndex(index)
+  def get = index
+  def set(i: Int) = index = i
 }

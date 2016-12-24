@@ -10,4 +10,10 @@ case class Vec2d(x: Double, y: Double) {
     if (r == 0) new Vec2d(0, 0)
     else new Vec2d(x / r, y / r)
   }
+  
+  override def equals(a: Any): Boolean =
+    if (a.isInstanceOf[Vec2d]) {
+      val vec = a.asInstanceOf[Vec2d]
+      x == vec.x && y == vec.y
+    } else false
 }

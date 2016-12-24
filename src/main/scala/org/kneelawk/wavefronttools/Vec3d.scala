@@ -14,5 +14,11 @@ case class Vec3d(x: Double, y: Double, z: Double) {
     else new Vec3d(x / r, y / r, z / r)
   }
 
+  override def equals(a: Any): Boolean =
+    if (a.isInstanceOf[Vec3d]) {
+      val vec = a.asInstanceOf[Vec3d]
+      x == vec.x && y == vec.y && z == vec.z
+    } else false
+
   def toVec4d(position: Boolean) = new Vec4d(x, y, z, if (position) 1 else 0)
 }
