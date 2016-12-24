@@ -69,6 +69,7 @@ class BasicMeshContext(
   }
 
   def merge(mesh: BasicMeshContext) {
+    // TODO: improve anti-duplicate functionality
     merge(vertices, mesh.vertices)
     merge(textureCoords, mesh.textureCoords)
     merge(normals, mesh.normals)
