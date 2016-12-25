@@ -3,32 +3,29 @@ package org.kneelawk.wavefronttools
 import scala.collection.mutable.ListBuffer
 
 class BasicMeshContext(
-    val vertices: ListBuffer[(Vec3d, PositionIndex)],
-    val textureCoords: ListBuffer[(Vec2d, TexCoordIndex)],
-    val normals: ListBuffer[(Vec3d, VertNormIndex)],
+    val vertices: ListBuffer[Vec3d],
+    val textureCoords: ListBuffer[Vec2d],
+    val normals: ListBuffer[Vec3d],
     val meshes: ListBuffer[BasicMesh]) extends MeshContext {
 
-  def this() = this(new ListBuffer[(Vec3d, PositionIndex)],
-    new ListBuffer[(Vec2d, TexCoordIndex)],
-    new ListBuffer[(Vec3d, VertNormIndex)],
+  def this() = this(new ListBuffer[Vec3d],
+    new ListBuffer[Vec2d],
+    new ListBuffer[Vec3d],
     new ListBuffer[BasicMesh])
 
-  def addVertex(vert: Vec3d): PositionIndex = {
-    val idx = new PositionIndex(vertices.length)
-    vertices += ((vert, idx))
-    idx
+  def addVertex(vert: Vec3d): Int = {
+    vertices += vert
+    vertices.length
   }
 
-  def addTexCoord(tex: Vec2d): TexCoordIndex = {
-    val idx = new TexCoordIndex(textureCoords.length)
-    textureCoords += ((tex, idx))
-    idx
+  def addTexCoord(tex: Vec2d): Int = {
+    textureCoords += tex
+    textureCoords.length
   }
 
-  def addNormal(norm: Vec3d): VertNormIndex = {
-    val idx = new VertNormIndex(normals.length)
-    normals += ((norm, idx))
-    idx
+  def addNormal(norm: Vec3d): Int = {
+    normals += norm
+    normals.length
   }
 
   def addMesh(mesh: BasicMesh): BasicMeshContext = {
@@ -36,43 +33,69 @@ class BasicMeshContext(
     this
   }
 
-  def getVertices = vertices.map(_._1)
-  def getTextureCoordinates = textureCoords.map(_._1)
-  def getVertexNormals = normals.map(_._1)
+  def getVertices = vertices
+  def getTextureCoordinates = textureCoords
+  def getVertexNormals = normals
   def getMeshes = meshes
 
   /**
    * BasicMeshContexts are mutable
    */
-  override def clone = new BasicMeshContext(
-    vertices.clone(),
-    textureCoords.clone(),
-    normals.clone(),
-    meshes.map(_.clone))
-
-  def transform(m: Mat4d): BasicMeshContext = {
-    vertices.transform(x => ((m * x._1.toVec4d(true)).toVec3d, x._2))
-    this
+  override def clone = {
+    new BasicMeshContext(
+      vertices.clone(),
+      textureCoords.clone(),
+      normals.clone(),
+      meshes.map(_.clone))
   }
 
-  private def merge[Data, Index <: MeshIndex](mine: ListBuffer[(Data, Index)], other: ListBuffer[(Data, Index)]) {
-    val len = mine.length
-    other.foreach(e => {
-      val i = mine.indexWhere(_._1 == e._1)
-      if (i >= 0) {
-        e._2.set(mine(i)._2.get)
+  def transform(m: Mat4d) = {
+    val n = clone()
+    n.vertices.transform { x => (m * x.toVec4d(true)).toVec3d }
+    n
+  }
+
+  def merge(mesh: BasicMeshContext): BasicMeshContext = {
+    val newPositions = vertices.clone()
+    val positionIndexMap = mesh.vertices.map { x =>
+      val i = vertices.indexOf(x)
+      if (i > -1) {
+        i
       } else {
-        e._2.offset(len)
-        mine += e
+        newPositions += x
+        newPositions.length
       }
-    })
-  }
+    }
 
-  def merge(mesh: BasicMeshContext) {
-    // TODO: improve anti-duplicate functionality
-    merge(vertices, mesh.vertices)
-    merge(textureCoords, mesh.textureCoords)
-    merge(normals, mesh.normals)
+    val newTexCoords = textureCoords.clone()
+    val texCoordIndexMap = mesh.textureCoords.map { x =>
+      val i = textureCoords.indexOf(x)
+      if (i > -1) {
+        i
+      } else {
+        newTexCoords += x
+        newTexCoords.length
+      }
+    }
+
+    val newVertNorms = normals.clone()
+    val vertNormIndexMap = mesh.normals.map { x =>
+      val i = normals.indexOf(x)
+      if (i > -1) {
+        i
+      } else {
+        newVertNorms += x
+        newVertNorms.length
+      }
+    }
+
+    new BasicMeshContext(newPositions, newTexCoords, newVertNorms, meshes.map { x =>
+      new BasicMesh(x.name, x.faces.map { f =>
+        new BasicFace(f.vertices.map { v =>
+          new BasicVertex(positionIndexMap(v.pos), texCoordIndexMap(v.tex), vertNormIndexMap(v.norm))
+        })
+      })
+    })
   }
 }
 
@@ -102,43 +125,18 @@ class BasicFace(val vertices: ListBuffer[BasicVertex]) extends Face {
     this
   }
 
-  def add(pos: PositionIndex, tex: TexCoordIndex, norm: VertNormIndex): BasicFace = {
+  def add(pos: Int, tex: Int, norm: Int): BasicFace = {
     vertices += new BasicVertex(pos, tex, norm)
     this
   }
 
   def getVertices = vertices
 
-  override def clone = new BasicFace(vertices.map(_.clone))
+  override def clone = new BasicFace(vertices.clone())
 }
 
-case class BasicVertex(pos: PositionIndex, tex: TexCoordIndex, norm: VertNormIndex) extends Vertex {
-  def getPositionIndex = pos.index
-  def getTextureCoordinateIndex = tex.index
-  def getVertexNormalIndex = norm.index
-
-  override def clone = new BasicVertex(pos.clone, tex.clone, norm.clone)
-}
-
-trait MeshIndex {
-  def get: Int
-  def set(i: Int)
-  def offset(i: Int) {
-    set(get + i)
-  }
-}
-case class PositionIndex(var index: Int) extends MeshIndex {
-  override def clone = new PositionIndex(index)
-  def get = index
-  def set(i: Int) = index = i
-}
-case class TexCoordIndex(var index: Int) extends MeshIndex {
-  override def clone = new TexCoordIndex(index)
-  def get = index
-  def set(i: Int) = index = i
-}
-case class VertNormIndex(var index: Int) extends MeshIndex {
-  override def clone = new VertNormIndex(index)
-  def get = index
-  def set(i: Int) = index = i
+case class BasicVertex(pos: Int, tex: Int, norm: Int) extends Vertex {
+  def getPositionIndex = pos
+  def getTextureCoordinateIndex = tex
+  def getVertexNormalIndex = norm
 }
