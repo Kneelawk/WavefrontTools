@@ -89,13 +89,13 @@ class BasicMeshContext(
       }
     }
 
-    new BasicMeshContext(newPositions, newTexCoords, newVertNorms, meshes.map { x =>
-      new BasicMesh(x.name, x.faces.map { f =>
+    new BasicMeshContext(newPositions, newTexCoords, newVertNorms, meshes ++ (mesh.meshes.map { m =>
+      new BasicMesh(m.name, m.faces.map { f =>
         new BasicFace(f.vertices.map { v =>
-          new BasicVertex(positionIndexMap(v.pos), texCoordIndexMap(v.tex), vertNormIndexMap(v.norm))
+          new BasicVertex(positionIndexMap(v.pos - 1), texCoordIndexMap(v.tex - 1), vertNormIndexMap(v.norm - 1))
         })
       })
-    })
+    }))
   }
   
   def +(mesh: BasicMeshContext) = merge(mesh)
