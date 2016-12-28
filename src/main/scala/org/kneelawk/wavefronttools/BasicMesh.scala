@@ -97,6 +97,8 @@ class BasicMeshContext(
       })
     })
   }
+  
+  def +(mesh: BasicMeshContext) = merge(mesh)
 }
 
 class BasicMesh(val name: String,
