@@ -60,7 +60,7 @@ class BasicMeshContext(
     val positionIndexMap = mesh.vertices.map { x =>
       val i = vertices.indexOf(x)
       if (i > -1) {
-        i
+        i + 1
       } else {
         newPositions += x
         newPositions.length
@@ -71,7 +71,7 @@ class BasicMeshContext(
     val texCoordIndexMap = mesh.textureCoords.map { x =>
       val i = textureCoords.indexOf(x)
       if (i > -1) {
-        i
+        i + 1
       } else {
         newTexCoords += x
         newTexCoords.length
@@ -82,7 +82,7 @@ class BasicMeshContext(
     val vertNormIndexMap = mesh.normals.map { x =>
       val i = normals.indexOf(x)
       if (i > -1) {
-        i
+        i + 1
       } else {
         newVertNorms += x
         newVertNorms.length
@@ -97,7 +97,7 @@ class BasicMeshContext(
       })
     }))
   }
-  
+
   def +(mesh: BasicMeshContext) = merge(mesh)
 }
 
